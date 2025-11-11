@@ -145,13 +145,48 @@ export class LayerManager {
         const layerId = e.target.dataset.layerId;
         this.toggleLayerVisibility(layerId);
       });
+      checkbox.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering layer click
+      });
     });
     
     layersList.querySelectorAll('.remove-layer-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering layer click
         const layerId = e.target.closest('.remove-layer-btn').dataset.layerId;
         this.removeLayer(layerId);
       });
     });
+    
+    // Add click handler to layer items for zoom-to-extent
+    layersList.querySelectorAll('.layer-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        // Don't zoom if clicking on checkbox or remove button
+        if (e.target.closest('.layer-checkbox') || e.target.closest('.remove-layer-btn')) {
+          return;
+        }
+        
+        const layerId = item.dataset.layerId;
+        this.zoomToLayer(layerId);
+      });
+    });
+  }
+  
+  zoomToLayer(layerId) {
+    const layerInfo = this.layers.find(l => l.id === layerId);
+    if (!layerInfo) return;
+    
+    try {
+      // Get the bounds of the layer
+      const bounds = layerInfo.layer.getBounds();
+      
+      // If bounds exist, fit map to layer bounds with padding
+      if (bounds) {
+        this.map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    } catch (error) {
+      // Layer might be empty or have no valid bounds
+      console.warn('Could not zoom to layer:', error);
+    }
   }
 }
